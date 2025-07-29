@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Contenuti Social</title>
     <!-- <link rel="icon" href="favicon.ico"> -->
-  <!-- Nuovo file -->
 
     <!-- Librerie Esterne via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -250,7 +249,7 @@
         }
         
         function escapeHtml(str) {
-            return String(str).replace(/"/g, '"').replace(/'/g, ''').replace(/</g, '<').replace(/>/g, '>');
+            return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
         function renderEditor() {
