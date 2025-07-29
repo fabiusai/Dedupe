@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Contenuti Social</title>
-    <!-- <link rel="icon" href="favicon.ico"> -->
+    <link rel="icon" href="favicon.ico">
 
     <!-- Librerie Esterne via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -120,7 +120,9 @@
     </div>
 
     <script>
+    // Questo script viene eseguito solo dopo che l'intera pagina è stata caricata.
     document.addEventListener('DOMContentLoaded', function () {
+
         // --- 1. RIFERIMENTI AGLI ELEMENTI DEL DOM ---
         const fileInput = document.getElementById('file-input');
         const uploadArea = document.querySelector('.upload-area');
@@ -136,7 +138,8 @@
         let originalData = [];
         let groupedData = {};
 
-        // --- 3. DEFINIZIONE DI TUTTE LE FUNZIONI ---
+        // --- 3. DEFINIZIONE DELLE FUNZIONI ---
+
         function handleFile(file) {
             if (!file) return;
             uploadPrompt.classList.add('hidden');
@@ -168,7 +171,9 @@
         }
         
         function getTrimmedString(value) {
-            if (value === null || typeof value === 'undefined') return '';
+            if (value === null || typeof value === 'undefined') {
+                return '';
+            }
             return String(value).trim();
         }
 
@@ -176,10 +181,12 @@
             groupedData = {};
             const argumentToLabelMap = new Map();
             const conflicts = new Map();
+
             originalData.forEach((row) => {
                 const argument = getTrimmedString(row['Argomento']);
                 const label = getTrimmedString(row['Label']);
                 if (!argument || !label) return;
+
                 if (argumentToLabelMap.has(argument) && argumentToLabelMap.get(argument) !== label) {
                     if (!conflicts.has(argument)) {
                         conflicts.set(argument, new Set([argumentToLabelMap.get(argument)]));
@@ -199,12 +206,22 @@
                 const label = getTrimmedString(row['Label']);
                 const argument = getTrimmedString(row['Argomento']);
                 if (!label || !argument) return;
+
                 const isInstitutional = row['Istituzionale'] == 1;
                 const link = row['Link'];
-                if (!groupedData[label]) groupedData[label] = {};
-                if (!groupedData[label][argument]) groupedData[label][argument] = { isInstitutional: false, link: null };
-                if (isInstitutional) groupedData[label][argument].isInstitutional = true;
-                if (!groupedData[label][argument].link && link) groupedData[label][argument].link = link;
+
+                if (!groupedData[label]) {
+                    groupedData[label] = {};
+                }
+                if (!groupedData[label][argument]) {
+                    groupedData[label][argument] = { isInstitutional: false, link: null };
+                }
+                if (isInstitutional) {
+                    groupedData[label][argument].isInstitutional = true;
+                }
+                if (!groupedData[label][argument].link && link) {
+                    groupedData[label][argument].link = link;
+                }
             });
             renderEditor();
         }
@@ -245,12 +262,18 @@
         }
         
         function resolveConflict(argumentToFix, correctLabel) {
-            originalData.forEach(row => { if (getTrimmedString(row['Argomento']) === argumentToFix) { row['Label'] = correctLabel; } });
+            originalData.forEach(row => {
+                if (getTrimmedString(row['Argomento']) === argumentToFix) {
+                    row['Label'] = correctLabel;
+                }
+            });
             resetUI();
             processData();
         }
         
-        function escapeHtml(str) { return String(str).replace(/"/g, '"').replace(/'/g, ''').replace(/</g, '<').replace(/>/g, '>'); }
+        function escapeHtml(str) {
+            return String(str).replace(/"/g, '"').replace(/'/g, ''').replace(/</g, '<').replace(/>/g, '>');
+        }
 
         function renderEditor() {
             editorSection.classList.remove('hidden');
@@ -259,7 +282,7 @@
             labels.forEach(label => {
                 const labelGroup = document.createElement('div');
                 labelGroup.className = 'label-group';
-                labelGroup.innerHTML = `<div class="label-header">${label}</div>`;
+                labelGroup.innerHTML = `<div class="label-header">${escapeHtml(label)}</div>`;
                 const argumentList = document.createElement('ul');
                 argumentList.className = 'argument-list';
                 argumentList.id = `list-${label.replace(/\s+/g, '-')}`;
@@ -269,13 +292,25 @@
                     const argumentItem = document.createElement('li');
                     argumentItem.className = 'argument-item';
                     argumentItem.dataset.originalArgument = argument;
-                    argumentItem.innerHTML = `<i class="fas fa-grip-vertical drag-handle"></i><input type="text" class="argument-text" value="${escapeHtml(argument)}"><div class="institutional-check"><input type="checkbox" id="check-${label}-${argument}" ${argData.isInstitutional ? 'checked' : ''}><label for="check-${label}-${argument}">Istituzionale</label></div><div class="argument-link">${argData.link ? `<a href="${argData.link}" target="_blank" title="Apri link"><i class="fa-solid fa-link"></i></a>` : ''}</div>`;
+                    const checkboxId = `check-${label.replace(/[^a-zA-Z0-9]/g, '-')}-${argument.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                    argumentItem.innerHTML = `
+                        <i class="fas fa-grip-vertical drag-handle"></i>
+                        <input type="text" class="argument-text" value="${escapeHtml(argument)}">
+                        <div class="institutional-check">
+                            <input type="checkbox" id="${checkboxId}" ${argData.isInstitutional ? 'checked' : ''}>
+                            <label for="${checkboxId}">Istituzionale</label>
+                        </div>
+                        <div class="argument-link">
+                            ${argData.link ? `<a href="${argData.link}" target="_blank" title="Apri link"><i class="fa-solid fa-link"></i></a>` : ''}
+                        </div>`;
                     argumentList.appendChild(argumentItem);
                 });
                 labelGroup.appendChild(argumentList);
                 editorContainer.appendChild(labelGroup);
             });
-            document.querySelectorAll('.argument-list').forEach(list => { new Sortable(list, { group: 'shared', animation: 150, handle: '.drag-handle', ghostClass: 'sortable-ghost' }); });
+            document.querySelectorAll('.argument-list').forEach(list => {
+                new Sortable(list, { group: 'shared', animation: 150, handle: '.drag-handle', ghostClass: 'sortable-ghost' });
+            });
             exportButton.disabled = false;
         }
 
@@ -305,7 +340,14 @@
                             row['Istituzionale'] = updates.newIsInstitutional ? 1 : '';
                         }
                     });
-                    updatedData.sort((a, b) => { const dateA = convertToDate(a.Data); const dateB = convertToDate(b.Data); if (!dateA && !dateB) return 0; if (!dateA) return 1; if (!dateB) return -1; return dateA - dateB; });
+                    updatedData.sort((a, b) => {
+                        const dateA = convertToDate(a.Data);
+                        const dateB = convertToDate(b.Data);
+                        if (!dateA && !dateB) return 0;
+                        if (!dateA) return 1;
+                        if (!dateB) return -1;
+                        return dateA - dateB;
+                    });
                     const newWorksheet = XLSX.utils.json_to_sheet(updatedData);
                     const newWorkbook = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, 'Dati Aggiornati');
@@ -327,7 +369,9 @@
             }
             if (typeof excelDate === 'string') {
                 const parts = excelDate.match(/(\d+)/g);
-                if (!parts || parts.length < 3) { return new Date(excelDate); }
+                if (!parts || parts.length < 3) {
+                    return new Date(excelDate);
+                }
                 let year, month, day;
                 if (parts[2] && parts[2].length === 4) {
                     day = parseInt(parts[0], 10);
@@ -346,14 +390,31 @@
         }
 
         // --- 4. ATTIVAZIONE DEGLI EVENT LISTENER ---
-        uploadArea.addEventListener('click', () => fileInput.click());
-        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.style.borderColor = 'var(--secondary-color)'; });
-        uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = 'var(--border-color)'; });
-        uploadArea.addEventListener('drop', (e) => { e.preventDefault(); fileInput.files = e.dataTransfer.files; handleFile(fileInput.files[0]); });
-        fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) { handleFile(e.target.files[0]); } });
+        uploadArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--secondary-color)';
+        });
+        uploadArea.addEventListener('dragleave', function(e) {
+            uploadArea.style.borderColor = 'var(--border-color)';
+        });
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
         exportButton.addEventListener('click', handleExport);
 
-    });
+    }); // Fine di DOMContentLoaded
     </script>
 </body>
 </html>
