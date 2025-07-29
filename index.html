@@ -122,7 +122,6 @@
     <script>
     document.addEventListener('DOMContentLoaded', function () {
 
-        // --- RIFERIMENTI DOM ---
         const fileInput = document.getElementById('file-input');
         const uploadArea = document.querySelector('.upload-area');
         const uploadPrompt = document.querySelector('.upload-prompt');
@@ -133,11 +132,9 @@
         const editorContainer = document.getElementById('editor-container');
         const exportButton = document.getElementById('export-button');
 
-        // --- STATO APPLICAZIONE ---
         let originalData = [];
         let groupedData = {};
 
-        // --- FUNZIONI ---
         function handleFile(file) {
             if (!file) return;
             uploadPrompt.classList.add('hidden');
