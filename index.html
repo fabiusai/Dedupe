@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Contenuti Social</title>
-    <!-- La riga seguente è commentata, quindi l'errore 404 del favicon può essere ignorato -->
     <!-- <link rel="icon" href="favicon.ico"> -->
 
     <!-- Librerie Esterne via CDN -->
@@ -121,10 +120,9 @@
     </div>
 
     <script>
-    // Questo script viene eseguito solo dopo che l'intera pagina è stata caricata.
     document.addEventListener('DOMContentLoaded', function () {
 
-        // --- 1. RIFERIMENTI AGLI ELEMENTI DEL DOM ---
+        // --- RIFERIMENTI DOM ---
         const fileInput = document.getElementById('file-input');
         const uploadArea = document.querySelector('.upload-area');
         const uploadPrompt = document.querySelector('.upload-prompt');
@@ -135,11 +133,11 @@
         const editorContainer = document.getElementById('editor-container');
         const exportButton = document.getElementById('export-button');
 
-        // --- 2. STATO DELL'APPLICAZIONE ---
+        // --- STATO APPLICAZIONE ---
         let originalData = [];
         let groupedData = {};
 
-        // --- 3. DEFINIZIONE DELLE FUNZIONI ---
+        // --- FUNZIONI ---
 
         function handleFile(file) {
             if (!file) return;
@@ -172,9 +170,7 @@
         }
         
         function getTrimmedString(value) {
-            if (value === null || typeof value === 'undefined') {
-                return '';
-            }
+            if (value === null || typeof value === 'undefined') return '';
             return String(value).trim();
         }
 
@@ -211,18 +207,12 @@
                 const isInstitutional = row['Istituzionale'] == 1;
                 const link = row['Link'];
 
-                if (!groupedData[label]) {
-                    groupedData[label] = {};
-                }
+                if (!groupedData[label]) groupedData[label] = {};
                 if (!groupedData[label][argument]) {
                     groupedData[label][argument] = { isInstitutional: false, link: null };
                 }
-                if (isInstitutional) {
-                    groupedData[label][argument].isInstitutional = true;
-                }
-                if (!groupedData[label][argument].link && link) {
-                    groupedData[label][argument].link = link;
-                }
+                if (isInstitutional) groupedData[label][argument].isInstitutional = true;
+                if (!groupedData[label][argument].link && link) groupedData[label][argument].link = link;
             });
             renderEditor();
         }
@@ -264,14 +254,13 @@
         
         function resolveConflict(argumentToFix, correctLabel) {
             originalData.forEach(row => {
-                if (getTrimmedString(row['Argomento']) === argumentToFix) {
-                    row['Label'] = correctLabel;
-                }
+                if (getTrimmedString(row['Argomento']) === argumentToFix) row['Label'] = correctLabel;
             });
             resetUI();
             processData();
         }
         
+        // --- FUNZIONE CORRETTA ---
         function escapeHtml(str) {
             return String(str).replace(/"/g, '"').replace(/'/g, ''').replace(/</g, '<').replace(/>/g, '>');
         }
@@ -293,7 +282,6 @@
                     const argumentItem = document.createElement('li');
                     argumentItem.className = 'argument-item';
                     argumentItem.dataset.originalArgument = argument;
-                    // --- BUG CORRETTO QUI --- È stata aggiunta la parentesi di chiusura mancante a .replace()
                     const checkboxId = `check-${label.replace(/[^a-zA-Z0-9]/g, '-')}-${argument.replace(/[^a-zA-Z0-9]/g, '-')}`;
                     argumentItem.innerHTML = `
                         <i class="fas fa-grip-vertical drag-handle"></i>
@@ -366,20 +354,16 @@
         }
         
         function convertToDate(excelDate) {
-            if (typeof excelDate === 'number') {
-                return new Date(Math.round((excelDate - 25569) * 86400 * 1000));
-            }
+            if (typeof excelDate === 'number') return new Date(Math.round((excelDate - 25569) * 86400 * 1000));
             if (typeof excelDate === 'string') {
                 const parts = excelDate.match(/(\d+)/g);
-                if (!parts || parts.length < 3) {
-                    return new Date(excelDate);
-                }
+                if (!parts || parts.length < 3) return new Date(excelDate);
                 let year, month, day;
-                if (parts[2] && parts[2].length === 4) {
+                if (parts[2] && parts[2].length === 4) { // DD/MM/YYYY
                     day = parseInt(parts[0], 10);
                     month = parseInt(parts[1], 10) - 1;
                     year = parseInt(parts[2], 10);
-                } else if (parts[0] && parts[0].length === 4) {
+                } else if (parts[0] && parts[0].length === 4) { // YYYY/MM/DD
                     year = parseInt(parts[0], 10);
                     month = parseInt(parts[1], 10) - 1;
                     day = parseInt(parts[2], 10);
@@ -391,32 +375,23 @@
             return null;
         }
 
-        // --- 4. ATTIVAZIONE DEGLI EVENT LISTENER ---
-        uploadArea.addEventListener('click', function() {
-            fileInput.click();
-        });
-        uploadArea.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            uploadArea.style.borderColor = 'var(--secondary-color)';
-        });
-        uploadArea.addEventListener('dragleave', function(e) {
-            uploadArea.style.borderColor = 'var(--border-color)';
-        });
-        uploadArea.addEventListener('drop', function(e) {
+        // --- EVENT LISTENER ---
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.style.borderColor = 'var(--secondary-color)'; });
+        uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = 'var(--border-color)'; });
+        uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             if (e.dataTransfer.files.length > 0) {
                 fileInput.files = e.dataTransfer.files;
                 handleFile(e.dataTransfer.files[0]);
             }
         });
-        fileInput.addEventListener('change', function(e) {
-            if (e.target.files.length > 0) {
-                handleFile(e.target.files[0]);
-            }
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
         });
         exportButton.addEventListener('click', handleExport);
 
-    }); // Fine di DOMContentLoaded
+    });
     </script>
 </body>
 </html>
