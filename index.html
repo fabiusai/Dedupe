@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Contenuti Social</title>
     <link rel="icon" href="favicon.ico">
-<!-- versione 12 e 56 -->
+       <!-- Versione 13 16 -->
 
     <!-- Librerie Esterne via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -36,7 +36,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: var(--font-family); background-color: var(--background-color); color: var(--text-color); line-height: 1.6; font-size: 16px; }
         .app-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        header { background-color: var(--secondary-color); color: white; padding: 20px 30px; border-radius: var(--border-radius); margin-bottom: 30px; box-shadow: var(--box-shadow); display: flex; justify-content: space-between; align-items: center; }
+        header { background-color: var(--secondary-color); color: white; padding: 20px 30px; border-radius: var(--border-radius); margin-bottom: 30px; box-shadow: var(--box-shadow); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;}
         header h1 { font-size: 1.8rem; font-weight: 700; color: var(--primary-color); }
         header p { font-size: 1rem; opacity: 0.9; }
         main { display: flex; flex-direction: column; gap: 30px; }
@@ -58,10 +58,10 @@
         .label-group { background: #fdfdfd; border: 1px solid var(--border-color); border-radius: var(--border-radius); min-height: 100px; }
         .label-header { background-color: var(--light-grey); color: var(--secondary-color); padding: 12px 20px; font-weight: 700; font-size: 1.2rem; border-top-left-radius: var(--border-radius); border-top-right-radius: var(--border-radius); border-bottom: 1px solid var(--border-color); }
         .argument-list { padding: 10px; list-style-type: none; }
-        .argument-item { display: flex; align-items: center; padding: 12px 10px; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 8px; gap: 15px; transition: box-shadow 0.2s; }
+        .argument-item { display: flex; align-items: center; padding: 12px 10px; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 8px; gap: 15px; transition: box-shadow 0.2s; flex-wrap: wrap; }
         .argument-item:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
         .drag-handle { cursor: move; color: #adb5bd; }
-        .argument-text { flex-grow: 1; border: none; border-bottom: 1px solid transparent; padding: 5px; font-size: 1rem; font-family: inherit; transition: border-color 0.3s; width: 100%; }
+        .argument-text { flex-grow: 1; border: none; border-bottom: 1px solid transparent; padding: 5px; font-size: 1rem; font-family: inherit; transition: border-color 0.3s; width: 100%; min-width: 200px;}
         .argument-text:focus { outline: none; border-bottom: 1px solid var(--secondary-color); }
         .institutional-check { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
         .institutional-check input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--secondary-color); cursor: pointer; }
@@ -74,9 +74,7 @@
         #export-button-container { text-align: right; margin-top: 20px; }
         .hidden { display: none !important; }
         @media (max-width: 768px) {
-            header { flex-direction: column; text-align: center; gap: 10px; }
-            header h1 { font-size: 1.5rem; }
-            .argument-item { flex-wrap: wrap; align-items: flex-start; gap: 10px; }
+            header { flex-direction: column; text-align: center; }
             #export-button-container { text-align: center; }
         }
     </style>
@@ -124,7 +122,6 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // --- Riferimenti DOM ---
         const fileInput = document.getElementById('file-input');
         const uploadArea = document.querySelector('.upload-area');
         const uploadPrompt = document.querySelector('.upload-prompt');
@@ -135,11 +132,9 @@
         const editorContainer = document.getElementById('editor-container');
         const exportButton = document.getElementById('export-button');
 
-        // --- Stato App ---
         let originalData = [];
         let groupedData = {};
 
-        // --- Gestione Upload ---
         uploadArea.addEventListener('click', () => fileInput.click());
         uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.style.borderColor = 'var(--secondary-color)'; });
         uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = 'var(--border-color)'; });
@@ -155,7 +150,6 @@
 
             const reader = new FileReader();
             reader.onload = function(e) {
-                // --- BLOCCO TRY/CATCH DI SICUREZZA ---
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
@@ -166,11 +160,9 @@
                     if (!originalData || originalData.length === 0) {
                         throw new Error("Il file Excel è vuoto o non è stato possibile leggerne il contenuto.");
                     }
-
                     fileNameDisplay.textContent = `File caricato: ${file.name}`;
                     processData();
                 } catch (err) {
-                    // Se si verifica qualsiasi errore, lo mostriamo all'utente e in console.
                     console.error("ERRORE CRITICO DURANTE L'ELABORAZIONE DEL FILE:", err);
                     alert(`Si è verificato un errore critico durante l'elaborazione del file.\n\nDETTAGLI: ${err.message}\n\nControlla la console per sviluppatori (F12) per ulteriori informazioni e verifica la struttura del file Excel.`);
                     resetApp();
@@ -179,10 +171,9 @@
             reader.readAsArrayBuffer(file);
         }
         
-        // --- FUNZIONE HELPER PER SANIFICARE I DATI ---
         function getTrimmedString(value) {
             if (value === null || typeof value === 'undefined') {
-                return ''; // Restituisce una stringa vuota sicura
+                return '';
             }
             return String(value).trim();
         }
@@ -192,11 +183,9 @@
             const argumentToLabelMap = new Map();
             const conflicts = new Map();
 
-            originalData.forEach((row, index) => {
+            originalData.forEach((row) => {
                 const argument = getTrimmedString(row['Argomento']);
                 const label = getTrimmedString(row['Label']);
-                
-                // Salta le righe senza label o argomento, sono inutili per l'app
                 if (!argument || !label) return;
 
                 if (argumentToLabelMap.has(argument) && argumentToLabelMap.get(argument) !== label) {
@@ -217,7 +206,6 @@
             originalData.forEach(row => {
                 const label = getTrimmedString(row['Label']);
                 const argument = getTrimmedString(row['Argomento']);
-                
                 if (!label || !argument) return;
 
                 const isInstitutional = row['Istituzionale'] == 1;
@@ -229,11 +217,9 @@
                 if (!groupedData[label][argument]) {
                     groupedData[label][argument] = { isInstitutional: false, link: null };
                 }
-
                 if (isInstitutional) groupedData[label][argument].isInstitutional = true;
                 if (!groupedData[label][argument].link && link) groupedData[label][argument].link = link;
             });
-            
             renderEditor();
         }
 
@@ -308,7 +294,7 @@
             exportButton.disabled = false;
         }
 
-        exportButton.addEventListener('click', function handleExport() {
+        function handleExport() {
             const btnOriginalText = exportButton.innerHTML;
             exportButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Elaborazione...';
             exportButton.disabled = true;
@@ -334,7 +320,7 @@
                             row['Istituzionale'] = updates.newIsInstitutional ? 1 : '';
                         }
                     });
-                    updatedData.sort((a, b) => { const dateA = convertToDate(a.Data), dateB = convertToDate(b.Data); if (!dateA && !dateB) return 0; if (!dateA) return 1; if (!dateB) return -1; return dateA - dateB; });
+                    updatedData.sort((a, b) => { const dateA = convertToDate(a.Data); const dateB = convertToDate(b.Data); if (!dateA && !dateB) return 0; if (!dateA) return 1; if (!dateB) return -1; return dateA - dateB; });
                     const newWorksheet = XLSX.utils.json_to_sheet(updatedData);
                     const newWorkbook = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, 'Dati Aggiornati');
@@ -348,23 +334,35 @@
                     exportButton.disabled = false;
                 }
             }, 50);
-        });
+        }
+        exportButton.addEventListener('click', handleExport);
 
         function convertToDate(excelDate) {
-            if (typeof excelDate === 'number') return new Date(Math.round((excelDate - 25569) * 86400 * 1000));
+            if (typeof excelDate === 'number') {
+                return new Date(Math.round((excelDate - 25569) * 86400 * 1000));
+            }
             if (typeof excelDate === 'string') {
                 const parts = excelDate.match(/(\d+)/g);
-                if (!parts || parts.length < 3) return new Date(excelDate);
+                if (!parts || parts.length < 3) {
+                    return new Date(excelDate);
+                }
                 let year, month, day;
-                if (parts[2] && parts[2].length === 4) { day = parseInt(parts[0], 10); month = parseInt(parts[1], 10) - 1; year = parseInt(parts[2], 10); } 
-                else if (parts[0] && parts[0].length === 4) { year = parseInt(parts[0], 10); month = parseInt(parts[1], 10) - 1; day = parseInt(parts[2], 10); } 
-                else { return new Date(excelDate); }
+                if (parts[2] && parts[2].length === 4) { // Formato DD/MM/YYYY
+                    day = parseInt(parts[0], 10);
+                    month = parseInt(parts[1], 10) - 1; // Mese in JS è 0-indexed
+                    year = parseInt(parts[2], 10);
+                } else if (parts[0] && parts[0].length === 4) { // Formato YYYY-MM-DD
+                    year = parseInt(parts[0], 10);
+                    month = parseInt(parts[1], 10) - 1; // Mese in JS è 0-indexed
+                    day = parseInt(parts[2], 10);
+                } else {
+                    return new Date(excelDate);
+                }
                 return new Date(year, month, day);
             }
             return null;
         }
     });
     </script>
-
 </body>
 </html>
