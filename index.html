@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Contenuti Social</title>
-    <link rel="icon" href="favicon.ico">
-       <!-- Versione 13 16 -->
+  <link rel="icon" href="favicon.ico">
+      <!-- Vesrsione 13 24 -->
 
     <!-- Librerie Esterne via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -122,6 +122,7 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // --- 1. RIFERIMENTI AGLI ELEMENTI DEL DOM ---
         const fileInput = document.getElementById('file-input');
         const uploadArea = document.querySelector('.upload-area');
         const uploadPrompt = document.querySelector('.upload-prompt');
@@ -132,15 +133,11 @@
         const editorContainer = document.getElementById('editor-container');
         const exportButton = document.getElementById('export-button');
 
+        // --- 2. STATO DELL'APPLICAZIONE ---
         let originalData = [];
         let groupedData = {};
 
-        uploadArea.addEventListener('click', () => fileInput.click());
-        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.style.borderColor = 'var(--secondary-color)'; });
-        uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = 'var(--border-color)'; });
-        uploadArea.addEventListener('drop', (e) => { e.preventDefault(); fileInput.files = e.dataTransfer.files; handleFile(fileInput.files[0]); });
-        fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) { handleFile(e.target.files[0]); } });
-
+        // --- 3. DEFINIZIONE DI TUTTE LE FUNZIONI ---
         function handleFile(file) {
             if (!file) return;
             uploadPrompt.classList.add('hidden');
@@ -164,7 +161,7 @@
                     processData();
                 } catch (err) {
                     console.error("ERRORE CRITICO DURANTE L'ELABORAZIONE DEL FILE:", err);
-                    alert(`Si è verificato un errore critico durante l'elaborazione del file.\n\nDETTAGLI: ${err.message}\n\nControlla la console per sviluppatori (F12) per ulteriori informazioni e verifica la struttura del file Excel.`);
+                    alert(`Si è verificato un errore critico.\n\nDETTAGLI: ${err.message}\n\nControlla la console (F12) e la struttura del file Excel.`);
                     resetApp();
                 }
             };
@@ -172,9 +169,7 @@
         }
         
         function getTrimmedString(value) {
-            if (value === null || typeof value === 'undefined') {
-                return '';
-            }
+            if (value === null || typeof value === 'undefined') return '';
             return String(value).trim();
         }
 
@@ -182,12 +177,10 @@
             groupedData = {};
             const argumentToLabelMap = new Map();
             const conflicts = new Map();
-
             originalData.forEach((row) => {
                 const argument = getTrimmedString(row['Argomento']);
                 const label = getTrimmedString(row['Label']);
                 if (!argument || !label) return;
-
                 if (argumentToLabelMap.has(argument) && argumentToLabelMap.get(argument) !== label) {
                     if (!conflicts.has(argument)) {
                         conflicts.set(argument, new Set([argumentToLabelMap.get(argument)]));
@@ -207,16 +200,10 @@
                 const label = getTrimmedString(row['Label']);
                 const argument = getTrimmedString(row['Argomento']);
                 if (!label || !argument) return;
-
                 const isInstitutional = row['Istituzionale'] == 1;
                 const link = row['Link'];
-
-                if (!groupedData[label]) {
-                    groupedData[label] = {};
-                }
-                if (!groupedData[label][argument]) {
-                    groupedData[label][argument] = { isInstitutional: false, link: null };
-                }
+                if (!groupedData[label]) groupedData[label] = {};
+                if (!groupedData[label][argument]) groupedData[label][argument] = { isInstitutional: false, link: null };
                 if (isInstitutional) groupedData[label][argument].isInstitutional = true;
                 if (!groupedData[label][argument].link && link) groupedData[label][argument].link = link;
             });
@@ -245,7 +232,7 @@
                 const conflictItem = document.createElement('div');
                 conflictItem.className = 'conflict-item';
                 let labelsText = Array.from(labels).map(l => `"${l}"`).join(' e ');
-                conflictItem.innerHTML = `<p>L'argomento <strong>"${escapeHtml(argument)}"</strong> è presente in più Label: ${labelsText}.</p><p>Scegli la Label corretta a cui assegnarlo:</p><div class="resolve-buttons"></div>`;
+                conflictItem.innerHTML = `<p>L'argomento <strong>"${escapeHtml(argument)}"</strong> è presente in più Label: ${labelsText}.</p><p>Scegli la Label corretta:</p><div class="resolve-buttons"></div>`;
                 const buttonsContainer = conflictItem.querySelector('.resolve-buttons');
                 labels.forEach(label => {
                     const button = document.createElement('button');
@@ -283,14 +270,13 @@
                     const argumentItem = document.createElement('li');
                     argumentItem.className = 'argument-item';
                     argumentItem.dataset.originalArgument = argument;
-                    argumentItem.innerHTML = `<i class="fas fa-grip-vertical drag-handle"></i><input type="text" class="argument-text" value="${escapeHtml(argument)}"><div class="institutional-check"><input type="checkbox" id="check-${label}-${argument}" ${argData.isInstitutional ? 'checked' : ''}><label for="check-${label}-${argument}">Istituzionale</label></div><div class="argument-link">${argData.link ? `<a href="${argData.link}" target="_blank" title="Apri link di esempio"><i class="fa-solid fa-link"></i></a>` : ''}</div>`;
+                    argumentItem.innerHTML = `<i class="fas fa-grip-vertical drag-handle"></i><input type="text" class="argument-text" value="${escapeHtml(argument)}"><div class="institutional-check"><input type="checkbox" id="check-${label}-${argument}" ${argData.isInstitutional ? 'checked' : ''}><label for="check-${label}-${argument}">Istituzionale</label></div><div class="argument-link">${argData.link ? `<a href="${argData.link}" target="_blank" title="Apri link"><i class="fa-solid fa-link"></i></a>` : ''}</div>`;
                     argumentList.appendChild(argumentItem);
                 });
                 labelGroup.appendChild(argumentList);
                 editorContainer.appendChild(labelGroup);
             });
-            const lists = document.querySelectorAll('.argument-list');
-            lists.forEach(list => { new Sortable(list, { group: 'shared', animation: 150, handle: '.drag-handle', ghostClass: 'sortable-ghost' }); });
+            document.querySelectorAll('.argument-list').forEach(list => { new Sortable(list, { group: 'shared', animation: 150, handle: '.drag-handle', ghostClass: 'sortable-ghost' }); });
             exportButton.disabled = false;
         }
 
@@ -335,25 +321,22 @@
                 }
             }, 50);
         }
-        exportButton.addEventListener('click', handleExport);
-
+        
         function convertToDate(excelDate) {
             if (typeof excelDate === 'number') {
                 return new Date(Math.round((excelDate - 25569) * 86400 * 1000));
             }
             if (typeof excelDate === 'string') {
                 const parts = excelDate.match(/(\d+)/g);
-                if (!parts || parts.length < 3) {
-                    return new Date(excelDate);
-                }
+                if (!parts || parts.length < 3) { return new Date(excelDate); }
                 let year, month, day;
-                if (parts[2] && parts[2].length === 4) { // Formato DD/MM/YYYY
+                if (parts[2] && parts[2].length === 4) {
                     day = parseInt(parts[0], 10);
-                    month = parseInt(parts[1], 10) - 1; // Mese in JS è 0-indexed
+                    month = parseInt(parts[1], 10) - 1;
                     year = parseInt(parts[2], 10);
-                } else if (parts[0] && parts[0].length === 4) { // Formato YYYY-MM-DD
+                } else if (parts[0] && parts[0].length === 4) {
                     year = parseInt(parts[0], 10);
-                    month = parseInt(parts[1], 10) - 1; // Mese in JS è 0-indexed
+                    month = parseInt(parts[1], 10) - 1;
                     day = parseInt(parts[2], 10);
                 } else {
                     return new Date(excelDate);
@@ -362,6 +345,15 @@
             }
             return null;
         }
+
+        // --- 4. ATTIVAZIONE DEGLI EVENT LISTENER ---
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.style.borderColor = 'var(--secondary-color)'; });
+        uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = 'var(--border-color)'; });
+        uploadArea.addEventListener('drop', (e) => { e.preventDefault(); fileInput.files = e.dataTransfer.files; handleFile(fileInput.files[0]); });
+        fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) { handleFile(e.target.files[0]); } });
+        exportButton.addEventListener('click', handleExport);
+
     });
     </script>
 </body>
