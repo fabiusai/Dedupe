@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Contenuti Social</title>
-    <!-- <link rel="icon" href="favicon.ico"> -->
+    <link rel="icon" href="favicon.ico">
 
     <!-- Librerie Esterne via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -60,7 +60,20 @@
         .argument-item { display: flex; align-items: center; padding: 12px 10px; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 8px; gap: 15px; transition: box-shadow 0.2s; flex-wrap: wrap; }
         .argument-item:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
         .drag-handle { cursor: move; color: #adb5bd; }
-        .argument-text { flex-grow: 1; border: none; border-bottom: 1px solid transparent; padding: 5px; font-size: 1rem; font-family: inherit; transition: border-color 0.3s; width: 100%; min-width: 200px;}
+        
+        /* --- CORREZIONE CSS --- */
+        .argument-text { 
+            flex-grow: 1; 
+            border: none; 
+            border-bottom: 1px solid transparent; 
+            padding: 5px; 
+            font-size: 1rem; 
+            font-family: inherit; 
+            transition: border-color 0.3s; 
+            /* width: 100%; */ /* Rimosso per sistemare il layout */
+            min-width: 200px;
+        }
+
         .argument-text:focus { outline: none; border-bottom: 1px solid var(--secondary-color); }
         .institutional-check { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
         .institutional-check input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--secondary-color); cursor: pointer; }
@@ -75,6 +88,7 @@
         @media (max-width: 768px) {
             header { flex-direction: column; text-align: center; }
             #export-button-container { text-align: center; }
+            .argument-item { flex-wrap: wrap; } /* Permette l'a capo su schermi piccoli */
         }
     </style>
 </head>
@@ -249,7 +263,7 @@
         }
         
         function escapeHtml(str) {
-            return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return String(str).replace(/"/g, '"').replace(/'/g, ''').replace(/</g, '<').replace(/>/g, '>');
         }
 
         function renderEditor() {
