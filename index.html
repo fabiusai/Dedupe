@@ -138,14 +138,12 @@
         let groupedData = {};
 
         // --- FUNZIONI ---
-
         function handleFile(file) {
             if (!file) return;
             uploadPrompt.classList.add('hidden');
             fileNameDisplay.textContent = `File in caricamento: ${file.name}`;
             fileNameDisplay.classList.remove('hidden');
             resetUI();
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
@@ -154,7 +152,6 @@
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
                     originalData = XLSX.utils.sheet_to_json(worksheet);
-                    
                     if (!originalData || originalData.length === 0) {
                         throw new Error("Il file Excel è vuoto o non è stato possibile leggerne il contenuto.");
                     }
@@ -178,12 +175,10 @@
             groupedData = {};
             const argumentToLabelMap = new Map();
             const conflicts = new Map();
-
             originalData.forEach((row) => {
                 const argument = getTrimmedString(row['Argomento']);
                 const label = getTrimmedString(row['Label']);
                 if (!argument || !label) return;
-
                 if (argumentToLabelMap.has(argument) && argumentToLabelMap.get(argument) !== label) {
                     if (!conflicts.has(argument)) {
                         conflicts.set(argument, new Set([argumentToLabelMap.get(argument)]));
@@ -193,20 +188,16 @@
                     argumentToLabelMap.set(argument, label);
                 }
             });
-
             if (conflicts.size > 0) {
                 displayConflicts(conflicts);
                 return;
             }
-
             originalData.forEach(row => {
                 const label = getTrimmedString(row['Label']);
                 const argument = getTrimmedString(row['Argomento']);
                 if (!label || !argument) return;
-
                 const isInstitutional = row['Istituzionale'] == 1;
                 const link = row['Link'];
-
                 if (!groupedData[label]) groupedData[label] = {};
                 if (!groupedData[label][argument]) {
                     groupedData[label][argument] = { isInstitutional: false, link: null };
@@ -260,7 +251,6 @@
             processData();
         }
         
-        // --- FUNZIONE CORRETTA ---
         function escapeHtml(str) {
             return String(str).replace(/"/g, '"').replace(/'/g, ''').replace(/</g, '<').replace(/>/g, '>');
         }
