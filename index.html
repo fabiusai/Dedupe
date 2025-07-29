@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Contenuti Social</title>
-    <!-- 1. CORREZIONE FAVICON -->
     <link rel="icon" href="favicon.ico" type="image/x-icon">
 
     <!-- Librerie Esterne via CDN -->
@@ -319,8 +318,7 @@
                             row['Istituzionale'] = updates.newIsInstitutional ? 1 : '';
                         }
                     });
-
-                    // Ordina i dati usando i valori numerici/oggetti Data originali
+                    
                     updatedData.sort((a, b) => {
                         const dateA = convertToDate(a.Data);
                         const dateB = convertToDate(b.Data);
@@ -330,16 +328,18 @@
                         return dateA - dateB;
                     });
                     
-                    // 2. CORREZIONE FORMATO DATA: Converte le date in stringhe DOPO l'ordinamento
+                    // CORREZIONE FORMATO DATA SU PIÙ COLONNE
+                    const dateColumnsToFormat = ['Data', 'Mese']; // Aggiungi qui altri nomi di colonne se necessario
+
                     updatedData.forEach(row => {
-                        // Assumendo che la colonna si chiami 'Data', 'Mese', o simile
-                        const dateColumnName = 'Data'; // Modifica se il nome della colonna è diverso
-                        if (row[dateColumnName]) {
-                            const jsDate = convertToDate(row[dateColumnName]);
-                            if (jsDate && !isNaN(jsDate.getTime())) {
-                                row[dateColumnName] = formatDateToDDMMYYYY(jsDate);
+                        dateColumnsToFormat.forEach(colName => {
+                            if (row[colName]) {
+                                const jsDate = convertToDate(row[colName]);
+                                if (jsDate && !isNaN(jsDate.getTime())) {
+                                    row[colName] = formatDateToDDMMYYYY(jsDate);
+                                }
                             }
-                        }
+                        });
                     });
 
                     const newWorksheet = XLSX.utils.json_to_sheet(updatedData);
@@ -357,22 +357,19 @@
             }, 50);
         }
         
-        // Funzione per convertire un numero seriale di Excel o una stringa in un oggetto Data
         function convertToDate(excelDate) {
             if (typeof excelDate === 'number') {
                 return new Date(Math.round((excelDate - 25569) * 86400 * 1000));
             }
             if (typeof excelDate === 'string') {
                 const parts = excelDate.match(/(\d+)/g);
-                if (!parts || parts.length < 3) {
-                    return new Date(excelDate);
-                }
+                if (!parts || parts.length < 3) return new Date(excelDate);
                 let year, month, day;
-                if (parts[2] && parts[2].length === 4) { // Formato gg/mm/aaaa
+                if (parts[2] && parts[2].length === 4) {
                     day = parseInt(parts[0], 10);
-                    month = parseInt(parts[1], 10) - 1; // Mesi in JS sono 0-11
+                    month = parseInt(parts[1], 10) - 1;
                     year = parseInt(parts[2], 10);
-                } else if (parts[0] && parts[0].length === 4) { // Formato aaaa/mm/gg
+                } else if (parts[0] && parts[0].length === 4) {
                     year = parseInt(parts[0], 10);
                     month = parseInt(parts[1], 10) - 1;
                     day = parseInt(parts[2], 10);
@@ -384,16 +381,14 @@
             return null;
         }
 
-        // Nuova funzione per formattare la data in gg/mm/aaaa
         function formatDateToDDMMYYYY(date) {
             const d = new Date(date);
             const day = String(d.getDate()).padStart(2, '0');
-            const month = String(d.getMonth() + 1).padStart(2, '0'); // Gennaio è 0, quindi +1
+            const month = String(d.getMonth() + 1).padStart(2, '0');
             const year = d.getFullYear();
             return `${day}/${month}/${year}`;
         }
 
-        // --- EVENT LISTENER ---
         uploadArea.addEventListener('click', () => fileInput.click());
         uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.style.borderColor = 'var(--secondary-color)'; });
         uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = 'var(--border-color)'; });
