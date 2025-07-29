@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Contenuti Social</title>
+    <link rel="icon" href="favicon.ico">
+
+    <!-- Librerie Esterne via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    
+    <!-- Icone (Font Awesome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Font (Google Fonts) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- Variabili Colori e Stili --- */
+        :root {
+            --primary-color: #ffc72c; /* Giallo istituzionale */
+            --secondary-color: #003366; /* Blu istituzionale */
+            --background-color: #f4f7f9;
+            --text-color: #333333;
+            --light-grey: #e9ecef;
+            --border-color: #dee2e6;
+            --card-bg: #ffffff;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --font-family: 'Open Sans', sans-serif;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* --- Reset e Stili Base --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            font-size: 16px;
+        }
+
+        /* --- Layout Principale --- */
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 20px 30px;
+            border-radius: var(--border-radius);
+            margin-bottom: 30px;
+            box-shadow: var(--box-shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .section-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 25px 30px;
+        }
+
+        .section-card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--secondary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+
+        /* --- Sezione Upload --- */
+        #upload-section {
+            text-align: center;
+        }
+
+        .upload-area {
+            border: 3px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 40px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
+            background-color: #fdfdfd;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+        }
+
+        .upload-area:hover {
+            background-color: #f1f8ff;
+            border-color: var(--secondary-color);
+        }
+
+        .upload-prompt .icon {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+        }
+        
+        .upload-prompt p {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .upload-prompt span {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        #file-input {
+            display: none;
+        }
+
+        #file-name-display {
+            font-weight: 600;
+            color: var(--secondary-color);
+            font-size: 1.1rem;
+        }
+
+        /* --- Sezione Conflitti --- */
+        #conflict-container {
+            border-left: 5px solid var(--error-color);
+        }
+        
+        .conflict-item {
+            background-color: #fff8f8;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid var(--error-color);
+            border-radius: 4px;
+        }
+        
+        .conflict-item p {
+            margin-bottom: 10px;
+        }
+
+        .conflict-item .resolve-buttons button {
+            margin-right: 10px;
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        /* --- Editor Principale --- */
+        #editor-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .label-group {
+            background: #fdfdfd;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            min-height: 100px;
+        }
+
+        .label-header {
+            background-color: var(--light-grey);
+            color: var(--secondary-color);
+            padding: 12px 20px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            border-top-left-radius: var(--border-radius);
+            border-top-right-radius: var(--border-radius);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .argument-list {
+            padding: 10px;
+            list-style-type: none;
+        }
+
+        .argument-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 10px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 8px;
+            gap: 15px;
+            transition: box-shadow 0.2s;
+        }
+
+        .argument-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .drag-handle {
+            cursor: move;
+            color: #adb5bd;
+        }
+
+        .argument-text {
+            flex-grow: 1;
+            border: none;
+            border-bottom: 1px solid transparent;
+            padding: 5px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.3s;
+            width: 100%;
+        }
+
+        .argument-text:focus {
+            outline: none;
+            border-bottom: 1px solid var(--secondary-color);
+        }
+
+        .institutional-check {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        
+        .institutional-check input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--secondary-color);
+            cursor: pointer;
+        }
+
+        .argument-link a {
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: color 0.2s;
+        }
+        
+        .argument-link a:hover {
+            color: var(--primary-color);
+        }
+
+        .sortable-ghost {
+            opacity: 0.4;
+            background-color: #cce5ff;
+            border: 1px dashed var(--secondary-color);
+        }
+
+        /* --- Sezione Esportazione e Bottoni --- */
+        .button {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            border: 2px solid var(--secondary-color);
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .button:hover:not(:disabled) {
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+        }
+
+        .button:disabled {
+            background-color: #adb5bd;
+            border-color: #6c757d;
+            color: white;
+            cursor: not-allowed;
+        }
+        
+        #export-button-container {
+            text-align: right;
+            margin-top: 20px;
+        }
+
+        /* --- Elementi Nascosti --- */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* --- Media Queries per Responsiveness --- */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .argument-item {
+                flex-wrap: wrap;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            #export-button-container {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <div>
+                <h1>Editor Contenuti Social</h1>
+                <p>Carica, organizza e modifica i tuoi contenuti in modo efficiente.</p>
+            </div>
+        </header>
+
+        <main>
+            <!-- SEZIONE 1: UPLOAD -->
+            <section id="upload-section" class="section-card">
+                <h2>1. Carica il tuo file Excel</h2>
+                <label for="file-input" class="upload-area">
+                    <div class="upload-prompt">
+                        <div class="icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                        <p>Trascina il file qui o clicca per selezionarlo</p>
+                        <span>Sono supportati solo i file .xlsx</span>
+                    </div>
+                    <div id="file-name-display" class="hidden"></div>
+                </label>
+                <input type="file" id="file-input" accept=".xlsx">
+            </section>
+            
+            <!-- SEZIONE 2: GESTIONE CONFLITTI -->
+            <section id="conflict-container" class="section-card hidden">
+                <h2><i class="fa-solid fa-triangle-exclamation" style="color: var(--error-color);"></i> Conflitti Rilevati</h2>
+                <p>Sono stati trovati argomenti duplicati in diverse "Label". Per favore, risolvi i conflitti per continuare.</p>
+                <div id="conflict-list"></div>
+            </section>
+
+            <!-- SEZIONE 3: EDITOR -->
+            <section id="editor-section" class="section-card hidden">
+                <h2>2. Organizza e Modifica Argomenti</h2>
+                <div id="editor-container"></div>
+                <div id="export-button-container">
+                    <button id="export-button" class="button" disabled>
+                        <i class="fa-solid fa-file-excel"></i> Esporta Excel Aggiornato
+                    </button>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- Riferimenti agli Elementi del DOM ---
+        const fileInput = document.getElementById('file-input');
+        const uploadArea = document.querySelector('.upload-area');
+        const uploadPrompt = document.querySelector('.upload-prompt');
+        const fileNameDisplay = document.getElementById('file-name-display');
+        
+        const conflictContainer = document.getElementById('conflict-container');
+        const conflictList = document.getElementById('conflict-list');
+        
+        const editorSection = document.getElementById('editor-section');
+        const editorContainer = document.getElementById('editor-container');
+        const exportButton = document.getElementById('export-button');
+
+        // --- Stato dell'Applicazione ---
+        let originalData = [];
+        let groupedData = {};
+
+        // --- Gestione dell'Upload ---
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--secondary-color)';
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = 'var(--border-color)';
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileInput.files = e.dataTransfer.files;
+            handleFile(fileInput.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file) return;
+            uploadPrompt.classList.add('hidden');
+            fileNameDisplay.textContent = `File in caricamento: ${file.name}`;
+            fileNameDisplay.classList.remove('hidden');
+            
+            resetUI();
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    originalData = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    fileNameDisplay.textContent = `File caricato: ${file.name}`;
+                    processData();
+                } catch (err) {
+                    console.error("Errore nella lettura del file:", err);
+                    alert("Si è verificato un errore durante la lettura del file. Assicurati che sia un file Excel valido.");
+                    resetApp();
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function resetApp() {
+            uploadPrompt.classList.remove('hidden');
+            fileNameDisplay.classList.add('hidden');
+            fileNameDisplay.textContent = '';
+            resetUI();
+        }
+
+        function resetUI() {
+            conflictContainer.classList.add('hidden');
+            conflictList.innerHTML = '';
+            editorSection.classList.add('hidden');
+            editorContainer.innerHTML = '';
+            exportButton.disabled = true;
+        }
+
+        // --- Processamento e Raggruppamento dei Dati ---
+        function processData() {
+            groupedData = {};
+            const argumentToLabelMap = new Map();
+            const conflicts = new Map();
+
+            originalData.forEach(row => {
+                const argument = row['Argomento']?.toString().trim();
+                const label = row['Label']?.toString().trim();
+                if (!argument || !label) return;
+
+                if (argumentToLabelMap.has(argument) && argumentToLabelMap.get(argument) !== label) {
+                    if (!conflicts.has(argument)) {
+                        conflicts.set(argument, new Set([argumentToLabelMap.get(argument)]));
+                    }
+                    conflicts.get(argument).add(label);
+                } else {
+                    argumentToLabelMap.set(argument, label);
+                }
+            });
+
+            if (conflicts.size > 0) {
+                displayConflicts(conflicts);
+                return;
+            }
+
+            originalData.forEach(row => {
+                const label = row['Label']?.toString().trim();
+                const argument = row['Argomento']?.toString().trim();
+                const isInstitutional = row['Istituzionale'] == 1;
+                const link = row['Link'];
+
+                if (!label || !argument) return;
+
+                if (!groupedData[label]) {
+                    groupedData[label] = {};
+                }
+                if (!groupedData[label][argument]) {
+                    groupedData[label][argument] = {
+                        isInstitutional: false,
+                        link: null
+                    };
+                }
+
+                if (isInstitutional) {
+                    groupedData[label][argument].isInstitutional = true;
+                }
+                if (!groupedData[label][argument].link && link) {
+                    groupedData[label][argument].link = link;
+                }
+            });
+            
+            renderEditor();
+        }
+
+        // --- Gestione dei Conflitti ---
+        function displayConflicts(conflicts) {
+            conflictContainer.classList.remove('hidden');
+            conflictList.innerHTML = '';
+
+            conflicts.forEach((labels, argument) => {
+                const conflictItem = document.createElement('div');
+                conflictItem.className = 'conflict-item';
+                
+                let labelsText = Array.from(labels).map(l => `"${l}"`).join(' e ');
+
+                conflictItem.innerHTML = `
+                    <p>L'argomento <strong>"${escapeHtml(argument)}"</strong> è presente in più Label: ${labelsText}.</p>
+                    <p>Scegli la Label corretta a cui assegnarlo:</p>
+                    <div class="resolve-buttons"></div>
+                `;
+
+                const buttonsContainer = conflictItem.querySelector('.resolve-buttons');
+                labels.forEach(label => {
+                    const button = document.createElement('button');
+                    button.className = 'button';
+                    button.textContent = `Assegna a "${label}"`;
+                    button.onclick = () => resolveConflict(argument, label);
+                    buttonsContainer.appendChild(button);
+                });
+
+                conflictList.appendChild(conflictItem);
+            });
+        }
+        
+        function resolveConflict(argumentToFix, correctLabel) {
+            originalData.forEach(row => {
+                if (row['Argomento']?.toString().trim() === argumentToFix) {
+                    row['Label'] = correctLabel;
+                }
+            });
+            
+            resetUI();
+            processData();
+        }
+        
+        // --- Helper per l'escaping HTML ---
+        function escapeHtml(str) {
+            if (typeof str !== 'string') return str;
+            return str.replace(/"/g, '"').replace(/'/g, ''').replace(/</g, '<').replace(/>/g, '>');
+        }
+
+        // --- Rendering dell'Interfaccia di Editing ---
+        function renderEditor() {
+            editorSection.classList.remove('hidden');
+            editorContainer.innerHTML = '';
+            
+            const labels = Object.keys(groupedData).sort();
+
+            labels.forEach(label => {
+                const labelGroup = document.createElement('div');
+                labelGroup.className = 'label-group';
+                labelGroup.innerHTML = `<div class="label-header">${label}</div>`;
+
+                const argumentList = document.createElement('ul');
+                argumentList.className = 'argument-list';
+                argumentList.id = `list-${label.replace(/\s+/g, '-')}`;
+                
+                const argumentsInLabel = Object.keys(groupedData[label]).sort();
+
+                argumentsInLabel.forEach(argument => {
+                    const argData = groupedData[label][argument];
+                    const argumentItem = document.createElement('li');
+                    argumentItem.className = 'argument-item';
+                    argumentItem.dataset.originalArgument = argument;
+
+                    argumentItem.innerHTML = `
+                        <i class="fas fa-grip-vertical drag-handle"></i>
+                        <input type="text" class="argument-text" value="${escapeHtml(argument)}">
+                        <div class="institutional-check">
+                            <input type="checkbox" id="check-${label}-${argument}" ${argData.isInstitutional ? 'checked' : ''}>
+                            <label for="check-${label}-${argument}">Istituzionale</label>
+                        </div>
+                        <div class="argument-link">
+                            ${argData.link ? `<a href="${argData.link}" target="_blank" title="Apri link di esempio"><i class="fa-solid fa-link"></i></a>` : ''}
+                        </div>
+                    `;
+                    argumentList.appendChild(argumentItem);
+                });
+                
+                labelGroup.appendChild(argumentList);
+                editorContainer.appendChild(labelGroup);
+            });
+
+            // Inizializza SortableJS
+            const lists = document.querySelectorAll('.argument-list');
+            lists.forEach(list => {
+                new Sortable(list, {
+                    group: 'shared',
+                    animation: 150,
+                    handle: '.drag-handle',
+                    ghostClass: 'sortable-ghost'
+                });
+            });
+
+            exportButton.disabled = false;
+        }
+
+        // --- Esportazione in Excel ---
+        exportButton.addEventListener('click', handleExport);
+
+        function handleExport() {
+            const btnOriginalText = exportButton.innerHTML;
+            exportButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Elaborazione...';
+            exportButton.disabled = true;
+
+            setTimeout(() => {
+                try {
+                    let updatedData = JSON.parse(JSON.stringify(originalData));
+    
+                    const uiStateMap = new Map();
+                    document.querySelectorAll('.label-group').forEach(labelGroup => {
+                        const newLabel = labelGroup.querySelector('.label-header').textContent;
+                        labelGroup.querySelectorAll('.argument-item').forEach(item => {
+                            const originalArgument = item.dataset.originalArgument;
+                            const newArgumentText = item.querySelector('.argument-text').value;
+                            const newIsInstitutional = item.querySelector('.institutional-check input').checked;
+                            
+                            uiStateMap.set(originalArgument, {
+                                newLabel,
+                                newArgumentText,
+                                newIsInstitutional
+                            });
+                        });
+                    });
+    
+                    updatedData.forEach(row => {
+                        const originalArgument = row['Argomento']?.toString().trim();
+                        if (uiStateMap.has(originalArgument)) {
+                            const updates = uiStateMap.get(originalArgument);
+                            row['Label'] = updates.newLabel;
+                            row['Argomento'] = updates.newArgumentText;
+                            row['Istituzionale'] = updates.newIsInstitutional ? 1 : '';
+                        }
+                    });
+    
+                    updatedData.sort((a, b) => {
+                        const dateA = convertToDate(a.Data);
+                        const dateB = convertToDate(b.Data);
+                        if (!dateA && !dateB) return 0;
+                        if (!dateA) return 1;
+                        if (!dateB) return -1;
+                        return dateA - dateB;
+                    });
+    
+                    const newWorksheet = XLSX.utils.json_to_sheet(updatedData);
+                    const newWorkbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, 'Dati Aggiornati');
+    
+                    // MODIFICA: Nome del file di esportazione aggiornato
+                    XLSX.writeFile(newWorkbook, 'report_elaborato.xlsx');
+                    
+                    exportButton.innerHTML = '<i class="fa-solid fa-check"></i> Fatto!';
+                    setTimeout(() => {
+                        exportButton.innerHTML = btnOriginalText;
+                        exportButton.disabled = false;
+                    }, 2000);
+    
+                } catch (err) {
+                    console.error("Errore durante l'esportazione:", err);
+                    alert("Si è verificato un errore durante la creazione del file Excel.");
+                    exportButton.innerHTML = btnOriginalText;
+                    exportButton.disabled = false;
+                }
+            }, 50);
+        }
+
+        // --- Funzione Helper per le Date ---
+        function convertToDate(excelDate) {
+            if (typeof excelDate === 'number') {
+                return new Date(Math.round((excelDate - 25569) * 86400 * 1000));
+            }
+            if (typeof excelDate === 'string') {
+                const parts = excelDate.match(/(\d+)/g);
+                if (!parts || parts.length < 3) return new Date(excelDate);
+
+                let year, month, day;
+                if (parts[2] && parts[2].length === 4) {
+                    day = parseInt(parts[0], 10);
+                    month = parseInt(parts[1], 10) - 1;
+                    year = parseInt(parts[2], 10);
+                } else if (parts[0] && parts[0].length === 4) {
+                    year = parseInt(parts[0], 10);
+                    month = parseInt(parts[1], 10) - 1;
+                    day = parseInt(parts[2], 10);
+                } else {
+                    return new Date(excelDate);
+                }
+                return new Date(year, month, day);
+            }
+            return null;
+        }
+    });
+    </script>
+
+</body>
+</html>
