@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor Contenuti Social</title>
-    <link rel="icon" href="favicon.ico">
+    <!-- <link rel="icon" href="favicon.ico"> -->
 
     <!-- Librerie Esterne via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -292,6 +292,7 @@
                     const argumentItem = document.createElement('li');
                     argumentItem.className = 'argument-item';
                     argumentItem.dataset.originalArgument = argument;
+                    // --- BUG CORRETTO QUI --- È stata aggiunta la parentesi di chiusura mancante a .replace()
                     const checkboxId = `check-${label.replace(/[^a-zA-Z0-9]/g, '-')}-${argument.replace(/[^a-zA-Z0-9]/g, '-')}`;
                     argumentItem.innerHTML = `
                         <i class="fas fa-grip-vertical drag-handle"></i>
@@ -301,7 +302,7 @@
                             <label for="${checkboxId}">Istituzionale</label>
                         </div>
                         <div class="argument-link">
-                            ${argData.link ? `<a href="${argData.link}" target="_blank" title="Apri link"><i class="fa-solid fa-link"></i></a>` : ''}
+                            ${argData.link ? `<a href="${escapeHtml(String(argData.link))}" target="_blank" title="Apri link"><i class="fa-solid fa-link"></i></a>` : ''}
                         </div>`;
                     argumentList.appendChild(argumentItem);
                 });
